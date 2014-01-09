@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
 
-df =  pd.read_csv('input-data/train.csv')
+df = pd.read_csv('input-data/train.csv')
 
 # -------------------------------------------------------
 # Preprocessing
@@ -24,10 +24,10 @@ df.Age.fillna(df.Age.median(), inplace=True)
 # -------------------------------------------------------
 # Model selection
 
-x =  df[['Pclass','Sex','Age','SibSp','Parch','Fare']]
-y =  df.Survived
+x = df[['Pclass','Sex','Age','SibSp','Parch','Fare']]
+y = df.Survived
 
-scores = pd.DataFrame(columns=['depth', 'train', 'cv'],)
+scores = pd.DataFrame(columns=['depth', 'train', 'cv'])
 
 MAX_DEPTH = 10
 EXPERIMENTS_PER_DEPTH = 10
@@ -69,14 +69,14 @@ exit()
 # Model training
 
 clf = tree.DecisionTreeClassifier(max_depth=BEST_MAX_DEPTH)
-clf.fit(x,y) # train on full training data
+clf.fit(x,y)  # train on full training data
 
 
 
 # -------------------------------------------------------
 # Predicting on test data
 
-td =  pd.read_csv('input-data/test.csv')
+td = pd.read_csv('input-data/test.csv')
 td.Sex = td.Sex.apply(lambda x: 0 if x=='male' else 1 )
 td.Age.fillna(td.Age.median(), inplace=True)
 td.Fare.fillna(td.Fare.median(), inplace=True)
