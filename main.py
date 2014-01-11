@@ -4,6 +4,7 @@ from sklearn import ensemble
 from sklearn import cross_validation
 import pandas as pd
 from sklearn import svm
+from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
 
 import warnings

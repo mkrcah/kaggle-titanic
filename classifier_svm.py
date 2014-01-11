@@ -12,9 +12,9 @@ from sklearn import preprocessing
 warnings.filterwarnings("ignore")
 from sklearn import preprocessing
 from sklearn import svm
+from sklearn import linear_model
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
-
 
 
 #------------------------------------------------------------
@@ -130,6 +130,7 @@ def trainSVM():
         y_true, y_pred = y_cv, clf.predict(X_cv)
         print(classification_report(y_true, y_pred))
         print()
+
 
 
 # -------------------------------------------------------

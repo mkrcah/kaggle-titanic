@@ -1,0 +1,25 @@
+# Predictor quality on kFold (n=4) cross-validation
+
+0.794631 (+/- 0.030)  Logistic regression with 10 covariates
+0.799115 (+/- 0.032)   - Embarked replaced with dummies
+0.800231 (+/- 0.023)   - Removed Fare, which is replaced with price group
+0.803605 (+/- 0.032)   - Pclass replaced with dummies
+0.818224 (+/- 0.049)   - Added salutation as dummies
+0.820466 (+/- 0.047)   - C=2
+0.821597 (+/- 0.053)   - C=4
+0.822718 (+/- 0.054)*  - Normalized age, submission #9, leaderboard score 0.78469, top 37%
+0.826092 (+/- 0.043)   - Fare replaced with normalized log transform
+0.828278 (+/- 0.034)  Random forrest
+0.832818 (+/- 0.059)  Logistic regression with cabin
+0.833939 (+/- 0.060)   - Zero-fare
+0.835060 (+/- 0.058)   - Better Age prediction using Pclass and Sex
+0.833934 (+/- 0.052)   - Removed noise for salutations
+0.836181 (+/- 0.053)   - tuned hyperparameter C=0.4
+
+
+# What else can I do?
+# - Ticket bought alone or not
+# - Get department code
+# + Better age prediction using linear regression
+# + Better fare allocation
+# + Try random forrests
