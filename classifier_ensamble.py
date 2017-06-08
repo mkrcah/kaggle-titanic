@@ -40,165 +40,6 @@ from sklearn.externals import joblib
 # TODO: area under curve
 # TODO: difference between Random Forrest and Boosted Trees
 
-def entropy(labels):
-    """ Computes entropy of label distribution. """
-    n_labels = len(labels)
-
-    if n_labels <= 1:
-        return 0
-
-    counts = np.bincount(labels)
-    probs = counts / n_labels
-    n_classes = np.count_nonzero(probs)
-
-    if n_classes <= 1:
-        return 0
-
-    ent = 0.
-
-    # Compute standard entropy.
-    for p in probs:
-        ent -= p * math.log(p, n_classes)
-
-    return ent
-
-
-
-
-def predict_test_data(clf, output_filename):
-    """ Predict survivals on test data using @clf and output prediction to file """
-
-    testData = preprocess_data(pd.read_csv('input-data/test.csv'))
-    X_test = testData[['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked-num', 'IsAlone', 'IsKid', 'PriceGroup']]
-
-    print('Predict on test data')
-    y_test = clf.predict(X_test)
-    output = pd.DataFrame({'PassengerId': testData.PassengerId, 'Survived': y_test})
-
-    print('Output predictions')
-    print(output.head())
-
-    output.to_csv(output_filename, index=False)
-
-
-
-def train():
-
-    CV_SET_SIZE = 0.7
-
-    inputData = preprocess_data(pd.read_csv('input-data/train.csv'))
-    X = inputData[['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked-num', 'IsAlone', 'IsKid', 'PriceGroup']]
-    y = inputData['Survived']
-
-    print(X.head(10))
-
-    #------------------------------------------------------------
-    # Exploration: Information gain of each attribute
-    #------------------------------------------------------------
-
-    forest = RandomForestClassifier(n_estimators=250, random_state=0)
-    forest.fit(X, y)
-
-    importances = zip(X.columns.tolist(), forest.feature_importances_)
-    importances = pd.DataFrame(importances, columns=['Attribute', 'Importance'])
-    importances = importances.sort('Importance', ascending=False)
-    print('Attribute importances')
-    print(importances)
-
-
-    # split to train and cv set
-    X_train, X_cv, y_train, y_cv = cross_validation.train_test_split(X, y, test_size=CV_SET_SIZE)
-
-
-    #------------------------------------------------------------
-    # Train logit classifier
-    #------------------------------------------------------------
-
-    #logistic = linear_model.LogisticRegression()
-    #logistic.fit(X_train, y_train)
-    #print('Logistic', logistic.score(X_cv, y_cv))
-    #
-    #svc = svm.SVC(C=10, kernel='linear')
-    #svc.fit(X_train, y_train)
-    #print('SVM', svc.score(X_cv, y_cv))
-    #
-
-    #------------------------------------------------------------
-    # Train on all data
-    #------------------------------------------------------------
-
-    # train on all data
-    #logistic.fit(X, y)
-    #predict_test_data(logistic, 'output/prediction_08_logit_all_training_data_covariates7.csv')
-
-    #------------------------------------------------------------
-    # Plot results
-    #-----------------------------------------------------------
-
-
-
-    X2 = X[['Age', 'Fare']]
-    svc = svm.SVC(C=10, kernel='linear')
-    svc.fit(X2, y)
-
-    plot_classifier(X2.Age, X2.Fare, y, svc)
-    pl.show()
-    #
-    ##logistic = linear_model.LogisticRegression()
-    ##logistic.fit(X_train, y_train)
-    ##print('Logistic', logistic.score(X_cv, y_cv))
-
-
-def train_simple_svm():
-    print('Training simple svn with Age and Fare')
-    inputData = preprocess_data(pd.read_csv('input-data/train.csv'))
-    X = inputData[['Age', 'Fare', 'SibSp']]
-#    X.Fare = np.power(X.Fare, 0.3)
-    y = inputData['Survived']
-
-    #clf = svm.SVC(C=1, kernel='rbf', gamma=0.1)
-    #clf.fit(X, y)
-
-    clf = linear_model.LogisticRegression()
-    clf.fit(X, y)
-
-    # save
-    filename = 'clf_data/svm_gauss.pkl'
-    joblib.dump(clf, filename)
-
-    print('Classifier saved to ', filename)
-
-
-def plot_classifier(x1, x2, y, clf):
-
-    h = 1
-    xx1, xx2 = np.meshgrid(
-        np.arange(x1.min() - 1, x1.max() + 1, h),
-        np.arange(x2.min() - 1, x2.max() + 1, h),
-    )
-
-    Z = clf.predict(np.c_[xx1.ravel(), xx2.ravel()])
-    Z = Z.reshape(xx1.shape)
-    pl.axis('off')
-    pl.contourf(xx1, xx2, Z, cmap=pl.cm.Paired)
-    pl.scatter(x1, x2, c=y, cmap=pl.cm.Paired)
-
-
-
-def plot_clf():
-
-#    filename = 'clf_data/simple_svm.pkl'
-    filename = 'clf_data/svm_gauss.pkl'
-    clf = joblib.load(filename)
-
-    inputData = preprocess_data(pd.read_csv('input-data/train.csv'))
-    X = inputData[['Age', 'Fare']]
-#    X.Fare = np.power(X.Fare, 0.3)
-    y = inputData['Survived']
-
-    print(clf.score(X,y))
-    plot_classifier(X.Age, X.Fare, y, clf)
-    pl.show()
 
 
 class EnsembleClassifier(BaseEstimator, ClassifierMixin):
@@ -236,7 +77,25 @@ def get_proxies_all_data():
     all = train.append(test)
 
     # aggreg_mean_age
-    group_columns = ['Pclass', 'Sex']
+
+    salutation = all.Name.apply(lambda x: x.split(',')[1].split(' ')[1])
+    replace = {
+        'Mlle.': 'Miss.',
+        'Major.': 'Dr.',
+        'Capt.': 'Dr.',
+        'Sir.': 'Mr.',
+        'the': 'Mr.',
+        'Don.': 'Mr.',
+        'Jonkheer.': 'Mr.',
+        'Mme.': 'Miss.',
+        'Lady.': 'Miss.',
+        'Ms.': 'Miss.',
+        'Dona.': 'Mrs.'
+    }
+    salutation = salutation.apply(lambda x: replace[x] if x in replace else x)
+    all['Salutation'] = salutation
+    #group_columns = ['Pclass', 'Sex', 'Salutation']
+    group_columns = ['Salutation']
     aggreg_mean_age = pd.Series(all.groupby(group_columns).mean().Age, name='MeanAge')
 
     # number of people for one ticket
@@ -259,13 +118,6 @@ def extract_features(df):
     # Sex: 0/1
     X['Sex'] = df.Sex.apply(lambda x: 0 if x == 'male' else 1)
 
-    # Age: n/a fill with median, then normalized
-    X['Age'] = df.Age
-    group_columns = ['Pclass', 'Sex']
-    mean_age = df.join(aggreg_mean_age, on=group_columns).MeanAge
-    X.Age[X.Age.isnull()] = mean_age
-    X['Age'] = preprocessing.scale(X.Age)
-
     # Salutation: dummies (Mr, Mrs,...) from name
     salutation = df.Name.apply(lambda x: x.split(',')[1].split(' ')[1])
     replace = {
@@ -282,7 +134,17 @@ def extract_features(df):
         'Dona.': 'Mrs.'
     }
     salutation = salutation.apply(lambda x: replace[x] if x in replace else x)
+    df['Salutation'] = salutation
     X = X.join(pd.get_dummies(salutation, prefix='Salut'))
+
+    # Age: n/a fill with median, then normalized
+    X['Age'] = df.Age
+    #group_columns = ['Pclass', 'Sex', 'Salutation']
+    group_columns = ['Salutation']
+    mean_age = df.join(aggreg_mean_age, on=group_columns).MeanAge
+    X.Age[X.Age.isnull()] = mean_age
+    X['Age'] = preprocessing.scale(X.Age)
+
 
     # SibSp: identity
     X['SibSp'] = df.SibSp
@@ -317,13 +179,13 @@ def extract_features(df):
         X['Floor_T'] = 0    # absent in test data
 
     # Ticket: No. of people on one ticket
-    #X['TicketSize'] = df.join(ticket_size, on='Ticket').TicketSize.clip_upper(1)
+    X['TicketSize'] = df.join(ticket_size, on='Ticket').TicketSize.clip_upper(1)
 
     #----------------------------------------------------------------
     # Unused features
     #----------------------------------------------------------------
 
-    print(X.head(5))
+    #print(X.head(5))
     #X['Age'] = preprocessing.scale(df.Age.fillna(df.Age.median()))
     #df['Embarked-num'] = df.Embarked.apply(lambda x: 0 if x == 'C' else (1 if x == 'Q' else 2))
     #df['PriceGroup'] = df.Fare.apply(lambda x: 0 if x <= 10 else (1 if x <= 20 else 2))
@@ -341,7 +203,7 @@ def letsgo():
 
     pd.set_printoptions(max_rows=200, max_columns=100)
     kFold = 4
-    max_score_sofar = 0.833934
+    max_score_sofar = 0.836181
 
 
     #----------------------------------------------------------------
@@ -367,21 +229,21 @@ def letsgo():
         #    'clf': svm.SVC(kernel='rbf', probability=True),
         #    'param_grid': [{'C': C_grid, 'gamma': [0.1, 0.01, 0.001, 0.0001]}]
         #},
-        {
-            'name': 'Logistic regression',
-            'clf': linear_model.LogisticRegression(),
-            'param_grid': [{'C': C_grid}]
-        },
         #{
-        #    'name': 'Decision tree',
-        #    'clf': DecisionTreeClassifier(),
-        #    'param_grid': [{'max_depth': range(3, 20)}]
+        #    'name': 'Logistic regression',
+        #    'clf': linear_model.LogisticRegression(),
+        #    'param_grid': [{'C': C_grid}]
         #},
         {
-            'name': 'Random forrest',
-            'clf': RandomForestClassifier(),
-            'param_grid': [{'n_estimators': [10, 50, 100, 200, 300], 'max_depth': [5, 10, 50, 100]}]
+            'name': 'Decision tree',
+            'clf': DecisionTreeClassifier(),
+            'param_grid': [{'max_depth': range(3, 20)}]
         },
+        #{
+        #    'name': 'Random forrest',
+        #    'clf': RandomForestClassifier(),
+        #    'param_grid': [{'n_estimators': [10, 50, 100, 200, 300], 'max_depth': [5, 10, 50, 100]}]
+        #},
     ]
 
     print("--------------------------------------")
@@ -399,14 +261,14 @@ def letsgo():
         best_estimators[p['name']] = clf.best_estimator_
 
     #if len(best_estimators) >= 1:
-    print("--------------------------------------")
-    ensemble = EnsembleClassifier(best_estimators)
-    scores = cross_validation.cross_val_score(ensemble, X, y, cv=kFold, verbose=0)
-    print("Ensemble of best estimators:: %0.6f (+/- %0.3f), improvement by %0.6f" % (scores.mean(), scores.std() * 2, scores.mean() - max_score_sofar))
+    #print("--------------------------------------")
+    #ensemble = EnsembleClassifier(best_estimators)
+    #scores = cross_validation.cross_val_score(ensemble, X, y, cv=kFold, verbose=0)
+    #print("Ensemble of best estimators:: %0.6f (+/- %0.3f), improvement by %0.6f" % (scores.mean(), scores.std() * 2, scores.mean() - max_score_sofar))
 
 
-    clf_to_submission = ensemble
-    #clf_to_submission = linear_model.LogisticRegression(C=0.4)
+    #clf_to_submission = ensemble
+    clf_to_submission = linear_model.LogisticRegression(C=0.4)
 
 
     #----------------------------------------------------------------
@@ -427,7 +289,7 @@ def letsgo():
     print('Output predictions')
     print(output.head())
 
-    filename = 'output/prediction_11.csv'
+    filename = 'output/prediction_13.csv'
     output.to_csv(filename, index=False)
     print('Predictions saved to ')
 

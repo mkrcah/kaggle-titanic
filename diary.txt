@@ -15,6 +15,7 @@
 0.835060 (+/- 0.058)   - Better Age prediction using Pclass and Sex
 0.833934 (+/- 0.052)   - Removed noise for salutations
 0.836181 (+/- 0.053)   - tuned hyperparameter C=0.4
+0.838424 (+/- 0.049)*  - Age prediction based on salutation, leaderboard score 0.77990
 
 
 # What else can I do?
